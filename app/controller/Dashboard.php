@@ -34,7 +34,7 @@ class Dashboard extends Controller
         $user->save();
 
 
-        header('Location: profile', true, 302);
+        header('Location: profile#saved', true, 302);
     }
 
 }
