@@ -9,6 +9,8 @@ class User extends Model
 
     protected $table = 'users';
 
+    const PASSWORD_ALGO = PASSWORD_BCRYPT;
+
     protected $emailSender;
 
     /**
@@ -111,18 +113,17 @@ class User extends Model
         $this->save();
     }
 
-    public function authorize() {
-        $originalPassword = $this->getHashPassword();
+    public function authorize(string $password) {
         $data = $this->getAt($this->table, 'email',$this->email);
         if(!$data) {
             return false;
         }
         $this->load($data[0]);
-        return $originalPassword == $this->password;
+        return password_verify($password, $this->password);
     }
 
     protected function getHashPassword(){
-        return sha1($this->password);
+        return password_hash($this->password, self::PASSWORD_ALGO);
     }
 
 }
