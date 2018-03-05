@@ -23,8 +23,7 @@ class Login extends Controller
         header('Content-Type: application/json');
         $user = new User();
         $user->email = $_POST['login'];
-        $user->password = $_POST['password'];
-        if($user->authorize()){
+        if($user->authorize($_POST['password'])){
             App::$app->getAuth()->login($user->id);
             $result = ['success' => true, 'location' => '.'];
         } else {
