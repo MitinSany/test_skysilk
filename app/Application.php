@@ -70,7 +70,7 @@ class Application
         $path = strpos($_SERVER['REQUEST_URI'], '?') > 0
             ? explode('?', $_SERVER['REQUEST_URI'])[0]
             : $_SERVER['REQUEST_URI'];
-        if ($this->routes[$_SERVER['REQUEST_METHOD']][$path]) {
+        if (isset($this->routes[$_SERVER['REQUEST_METHOD']][$path])) {
             $handler = $this->routes[$_SERVER['REQUEST_METHOD']][$path];
             if (gettype($handler) == 'object') {
                 $handler();
@@ -84,7 +84,7 @@ class Application
         } else {
             $this->render('message', [
                 'title' => 'Error',
-                'message' => "Method:Route not found: <pre>{$_SERVER['REQUEST_METHOD']}:{$_SERVER['REQUEST_URI']}</pre>",
+                'message' => "Route not found<pre>{$_SERVER['REQUEST_URI']}</pre>",
                 'style' => 'danger'
             ], 500);
         }
