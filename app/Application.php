@@ -82,7 +82,7 @@ class Application
                 throw new \Exception('Unknown type of operand: ' . $handler);
             }
         } else {
-            $this->render('message',                [
+            $this->render('message', [
                 'title' => 'Error',
                 'message' => "Method:Route not found: <pre>{$_SERVER['REQUEST_METHOD']}:{$_SERVER['REQUEST_URI']}</pre>",
                 'style' => 'danger'
@@ -101,7 +101,7 @@ class Application
         if (file_exists($templateFile)) {
             include __DIR__ . '/../app/view/layout.php';
         } else {
-            $this->render('message',                [
+            $this->render('message', [
                 'title' => 'Error',
                 'message' => 'Template ' . $template . ' not found',
                 'style' => 'danger'
@@ -109,11 +109,13 @@ class Application
         }
     }
 
-    public function getConfig() {
+    public function getConfig()
+    {
         return $this->config;
     }
 
-    public function getAuth(){
+    public function getAuth()
+    {
         return $this->auth;
     }
 }
