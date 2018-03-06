@@ -32,7 +32,8 @@
                     email: $('#register-email').val(),
                     firstname: $('#register-firstname').val(),
                     lastname: $('#register-lastname').val(),
-                    password: $('#register-passwd').val()
+                    password: $('#register-passwd').val(),
+                    csrfToken: $('#csrfToken').val()
                 },
                 success: function (data) {
                     if (data.success === false) {
@@ -57,7 +58,7 @@
             </div>
             <div class="panel-body">
                 <form id="signupform" class="form-horizontal" role="form">
-
+                    <input type="hidden" id="csrfToken" name="csrfToken" value="<?= $param['csrfToken']; ?>">
                     <div id="signupalert" style="display:none" class="alert alert-danger">
                         <p>Error:</p>
                         <span></span>

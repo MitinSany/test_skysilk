@@ -3,6 +3,8 @@
 namespace app\controller;
 
 use \app\Application as App;
+use app\helper\Csrf;
+use app\helper\Form;
 use \app\model\User;
 use \app\exception\Exception;
 use \app\helper\EmailSender;
@@ -14,15 +16,27 @@ class Signup extends Controller
     {
         if (App::$app->getAuth()->isLoggedIn()) {
             header('Location: .', true, 302);
+            exit;
         }
-
-        App::$app->render('signup/signup');
+        $csrf = new Csrf(App::$app->getConfig()['csrf_salt']);
+        $secret = $csrf->getSecret();
+        $token = $csrf->getToken($secret);
+        App::$app->render('signup/signup', ['csrfToken' => $token]);
     }
 
     public function postSignup()
     {
         header('Content-Type: application/json');
         $result = ['success' => true, 'location' => 'successsignup'];
+
+        $csrf = new Csrf(App::$app->getConfig()['csrf_salt']);
+
+        if(!Form::checkFields(['email', 'password'])) {
+            $result = ['success' => false, 'message' => 'Missing require field'];
+        } elseif(!$csrf->checkToken($_POST['csrfToken'])) {
+            $result = ['success' => false, 'message' => 'Bad request'];
+        }
+
         try {
             $config = App::$app->getConfig();
             $emailSender = new EmailSender(
@@ -64,7 +78,7 @@ class Signup extends Controller
     protected function getSignupMessage(string $signupUrl)
     {
         return "Congradultions!<br/>"
-            ."You registered in <a href='https://www.linkedin.com/in/mitinalexander/'>Alexander Mitin</a>"
+            . "You registered in <a href='https://www.linkedin.com/in/mitinalexander/'>Alexander Mitin</a>"
             . " test project.<br/>For continue registration follow this link: <a href='{$signupUrl}'>{$signupUrl}</a>";
     }
 
@@ -83,16 +97,20 @@ class Signup extends Controller
 
     }
 
-    public function getSuccessSignupView() {
-        if(App::$app->getAuth()->isLoggedIn()) {
+    public function getSuccessSignupView()
+    {
+        if (App::$app->getAuth()->isLoggedIn()) {
             header('Location: .', true, 302);
+            exit;
         }
+
         App::$app->render('message',
             [
                 'title' => 'Success',
                 'message' => 'User successful registered. Please check you email for continue registration',
                 'style' => 'success'
-            ]);
+            ]
+        );
     }
 
 }

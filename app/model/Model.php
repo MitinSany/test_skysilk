@@ -4,6 +4,7 @@ namespace app\model;
 
 use \app\Application as App;
 use app\exception\DatabaseException;
+use app\exception\Exception;
 
 class Model
 {
@@ -49,7 +50,37 @@ class Model
         }
     }
 
-    public function loadById(int $id) {
+    public function loadById(int $id)
+    {
         $this->load($this->getAt($this->table, 'id', $id)[0]);
+    }
+
+    public function filter($value)
+    {
+        $value = strip_tags($value);
+        $value = htmlentities($value, ENT_QUOTES, 'UTF-8');
+        $value = htmlspecialchars($value, ENT_QUOTES);
+        return $value;
+    }
+
+    public function __set($property, $value)
+    {
+        $fnName = 'set' . ucfirst($property);
+        if (method_exists($this, $fnName)) {
+            return $this->$fnName($value);
+        } else {
+            $this->$property = $value;
+            return $this->$property;
+        }
+    }
+
+    public function __get($property)
+    {
+        $fnName = 'get' . ucfirst($property);
+        if (method_exists($this, $fnName)) {
+            return $this->$fnName();
+        } else {
+            return $this->$property;
+        }
     }
 }

@@ -16,37 +16,37 @@ class User extends Model
     /**
      * @var int
      */
-    public $id = null;
+    protected $id = null;
 
     /**
      * @var string
      */
-    public $email = null;
+    protected $email = null;
 
     /**
      * @var string
      */
-    public $password = null;
+    protected $password = null;
 
     /**
      * @var string
      */
-    public $firstName = null;
+    protected $firstName = null;
 
     /**
      * @var string
      */
-    public $lastName = null;
+    protected $lastName = null;
 
     /**
      * @var string
      */
-    public $signupCode = null;
+    protected $signupCode = null;
 
     /**
      * @var bool
      */
-    public $activated = 0;
+    protected $activated = 0;
 
     public function __construct($emailSender = null)
     {
@@ -124,6 +124,26 @@ class User extends Model
 
     protected function getHashPassword(){
         return password_hash($this->password, self::PASSWORD_ALGO);
+    }
+
+    public function setEmail(string $value)
+    {
+        $value = $this->filter($value);
+        if (filter_var($value, FILTER_VALIDATE_EMAIL)) {
+            return $this->email = $value;
+        } else {
+            throw new Exception("Entered address email is not a valid");
+        }
+    }
+
+    public function setFirstName(string $value)
+    {
+        return $this->firstName = $this->filter($value);
+    }
+
+    public function setLastName(string $value)
+    {
+        return $this->lastName = $this->filter($value);
     }
 
 }

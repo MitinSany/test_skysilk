@@ -33,12 +33,18 @@ class Application
      */
     public static $app;
 
+    public $path;
+
     public function __construct(array $config = [])
     {
         self::$app = $this;
         $this->config = $config;
         $user = new User();
         $this->auth = new Auth($user);
+
+        $this->path = strpos($_SERVER['REQUEST_URI'], '?') > 0
+            ? explode('?', $_SERVER['REQUEST_URI'])[0]
+            : $_SERVER['REQUEST_URI'];
     }
 
     protected function addRoute(string $method, string $route, $handler)
@@ -67,11 +73,8 @@ class Application
 
     public function run()
     {
-        $path = strpos($_SERVER['REQUEST_URI'], '?') > 0
-            ? explode('?', $_SERVER['REQUEST_URI'])[0]
-            : $_SERVER['REQUEST_URI'];
-        if (isset($this->routes[$_SERVER['REQUEST_METHOD']][$path])) {
-            $handler = $this->routes[$_SERVER['REQUEST_METHOD']][$path];
+        if (isset($this->routes[$_SERVER['REQUEST_METHOD']][$this->path])) {
+            $handler = $this->routes[$_SERVER['REQUEST_METHOD']][$this->path];
             if (gettype($handler) == 'object') {
                 $handler();
             } elseif (gettype($handler) == 'array') {

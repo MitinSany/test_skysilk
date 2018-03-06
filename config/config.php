@@ -8,7 +8,8 @@ return [
         'host' => 'smtp.meta.ua',
         'port' => 465,
         'user' => 'test-skylink@meta.ua',
-        'password' => 'test-skylink010318',
-    ]
+        'password' => 'test-skylink010318'
+    ],
+    'csrf_salt' => '87654321'
 
 ];
