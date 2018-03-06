@@ -9,7 +9,8 @@
                 url: 'login',
                 data: {
                     login: $('#login-username').val(),
-                    password: $('#login-password').val()
+                    password: $('#login-password').val(),
+                    csrfToken: $('#csrfToken').val()
                 },
                 success: function (data) {
                     if (data.success === false) {
@@ -56,7 +57,7 @@
                 <div style="display:none" id="login-alert" class="alert alert-danger col-sm-12"></div>
 
                 <form id="loginform" class="form-horizontal" role="form">
-
+                    <input type="hidden" id="csrfToken" name="csrfToken" value="<?= $param['csrfToken']; ?>">
                     <div style="margin-bottom: 25px" class="input-group">
                         <span class="input-group-addon"><i class="glyphicon glyphicon-user"></i></span>
                         <input id="login-username" type="text" class="form-control" name="username"

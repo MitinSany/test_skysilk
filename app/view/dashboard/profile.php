@@ -8,6 +8,7 @@
 </script>
 <div class="container">
     <form method="POST">
+        <input type="hidden" name="csrfToken" value="<?= $param['csrfToken']; ?>">
         <div class="form-group">
             <div style="display:none" id="messagebox" class="alert alert-success col-sm-12"></div>
             <label for="firstName">First Name</label>
