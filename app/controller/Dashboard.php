@@ -13,12 +13,15 @@ use \app\helper\EmailSender;
 class Dashboard extends Controller
 {
 
-    public function getIndex()
+    public function __construct()
     {
         if (!App::$app->getAuth()->isLoggedIn()) {
             header('Location: login', true, 302);
         }
+    }
 
+    public function getIndex()
+    {
         $userData = App::$app->getAuth()->getUser()->getData();
         $csrf = new Csrf(App::$app->getConfig()['csrf_salt']);
         $secret = $csrf->getSecret();
