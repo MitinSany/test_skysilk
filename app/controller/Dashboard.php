@@ -26,10 +26,10 @@ class Dashboard extends Controller
         $csrf = new Csrf(App::$app->getConfig()['csrf_salt']);
         $secret = $csrf->getSecret();
         $token = $csrf->getToken($secret);
-
+        $path = App::$app->path;
         App::$app->render('dashboard/template', [
             'site' => $_SERVER['HTTP_HOST'],
-            'path' => $_SERVER['REQUEST_URI'] == '/' ? 'dashboard' : $_SERVER['REQUEST_URI'],
+            'path' => $path == '/' ? 'dashboard' : $path,
             'userData' => $userData,
             'csrfToken' => $token
         ]);
@@ -37,7 +37,7 @@ class Dashboard extends Controller
 
     public function postProfile()
     {
-        if(!Form::checkFields(['firstName', 'lastName', 'csrfToken'])) {
+        if (!Form::checkFields(['firstName', 'lastName', 'csrfToken'])) {
             App::$app->render('message', [
                 'title' => 'Error',
                 'message' => 'Missing require field',
@@ -47,7 +47,7 @@ class Dashboard extends Controller
         }
 
         $csrf = new Csrf(App::$app->getConfig()['csrf_salt']);
-        if(!$csrf->checkToken($_POST['csrfToken'])) {
+        if (!$csrf->checkToken($_POST['csrfToken'])) {
             App::$app->render('message', [
                 'title' => 'Error',
                 'message' => 'Bad request',

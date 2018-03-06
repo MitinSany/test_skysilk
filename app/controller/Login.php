@@ -19,6 +19,7 @@ class Login extends Controller
 
         if (App::$app->getAuth()->isLoggedIn()) {
             header('Location: .', true, 302);
+            exit;
         }
 
         App::$app->render('login/login', ['csrfToken' => $token]);
@@ -32,7 +33,7 @@ class Login extends Controller
         $user->email = $_POST['login'];
         $csrf = new Csrf(App::$app->getConfig()['csrf_salt']);
 
-        if(Form::checkFields(['login', 'password', 'csrfToken'])) {
+        if(!Form::checkFields(['login', 'password', 'csrfToken'])) {
             $result = ['success' => false, 'message' => 'Missing require field'];
         } elseif(!$csrf->checkToken($_POST['csrfToken'])) {
             $result = ['success' => false, 'message' => 'Bad request'];
@@ -48,6 +49,7 @@ class Login extends Controller
     public function getLogout() {
         Session::destroy();
         header('Location: login');
+        exit;
     }
 
 }

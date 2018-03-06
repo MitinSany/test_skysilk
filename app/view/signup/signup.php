@@ -57,7 +57,7 @@
             </div>
             <div class="panel-body">
                 <form id="signupform" class="form-horizontal" role="form">
-
+                    <input type="hidden" id="csrfToken" name="csrfToken" value="<?= $param['csrfToken']; ?>">
                     <div id="signupalert" style="display:none" class="alert alert-danger">
                         <p>Error:</p>
                         <span></span>

@@ -5,9 +5,11 @@ namespace app\helper;
 
 class Auth
 {
-    protected $loggedInKey = 'loggedIn';
-    protected $userId = 'userId';
+    const loggedInKey = 'loggedIn';
+    const userId = 'userId';
+    const ipKey = 'up';
     protected $user;
+    protected $ip;
 
     public function __construct($user)
     {
@@ -18,13 +20,14 @@ class Auth
     public function isLoggedIn()
     {
         Session::init();
-        return Session::get($this->loggedInKey);
+        return Session::get(self::loggedInKey) && Session::get(self::ipKey) ;
     }
 
     public function login(int $userId)
     {
-        Session::set($this->loggedInKey, true);
-        Session::set($this->userId, $userId);
+        Session::set(self::loggedInKey, true);
+        Session::set(self::userId, $userId);
+        Session::set(self::ipKey, $_SERVER['REMOTE_ADDR']);
     }
 
     public function logout()
@@ -34,7 +37,7 @@ class Auth
 
     public function getUser()
     {
-        $userId = Session::get($this->userId);
+        $userId = Session::get(self::userId);
         $this->user->loadById($userId);
         return $this->user;
     }
