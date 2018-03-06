@@ -32,7 +32,8 @@
                     email: $('#register-email').val(),
                     firstname: $('#register-firstname').val(),
                     lastname: $('#register-lastname').val(),
-                    password: $('#register-passwd').val()
+                    password: $('#register-passwd').val(),
+                    csrfToken: $('#csrfToken').val()
                 },
                 success: function (data) {
                     if (data.success === false) {

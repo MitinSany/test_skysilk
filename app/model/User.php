@@ -128,7 +128,12 @@ class User extends Model
 
     public function setEmail(string $value)
     {
-        return $this->email = $this->filter($value);
+        $value = $this->filter($value);
+        if (filter_var($value, FILTER_VALIDATE_EMAIL)) {
+            return $this->email = $value;
+        } else {
+            throw new Exception("Entered address email is not a valid");
+        }
     }
 
     public function setFirstName(string $value)
