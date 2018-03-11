@@ -2,6 +2,7 @@
 
 namespace app;
 
+use app\exception\Exception;
 use app\model\User;
 use \PDO;
 use \app\helper\Auth;
@@ -65,7 +66,7 @@ class Application
     public function db()
     {
         if (empty($this->db)) {
-            $this->db = new \PDO('sqlite:' . $this->config['db_file']);
+            $this->db = new PDO('sqlite:' . $this->config['db_file']);
             $this->db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
         }
         return $this->db;
@@ -73,24 +74,29 @@ class Application
 
     public function run()
     {
-        if (isset($this->routes[$_SERVER['REQUEST_METHOD']][$this->path])) {
-            $handler = $this->routes[$_SERVER['REQUEST_METHOD']][$this->path];
-            if (gettype($handler) == 'object') {
-                $handler();
-            } elseif (gettype($handler) == 'array') {
-                $class = new $handler[0];
-                $method = $handler[1];
-                $class->$method();
+        try {
+            if (isset($this->routes[$_SERVER['REQUEST_METHOD']][$this->path])) {
+                $handler = $this->routes[$_SERVER['REQUEST_METHOD']][$this->path];
+                if (gettype($handler) == 'object') {
+                    $handler();
+                } elseif (gettype($handler) == 'array') {
+                    $class = new $handler[0];
+                    $method = $handler[1];
+                    $class->$method();
+                } else {
+                    throw new Exception('Unknown type of operand: ' . $handler);
+                }
             } else {
-                throw new \Exception('Unknown type of operand: ' . $handler);
+                throw new Exception("Route not found<pre>{$_SERVER['REQUEST_URI']}</pre>", 500);
             }
-        } else {
+        } catch (Exception $e) {
             $this->render('message', [
                 'title' => 'Error',
-                'message' => "Route not found<pre>{$_SERVER['REQUEST_URI']}</pre>",
+                'message' => $e->getMessage(),
                 'style' => 'danger'
-            ], 500);
+            ], $e->getCode() > 0 ? $e->getCode() : 500);
         }
+
     }
 
     public function render(string $template, array $param = [], int $exitCode = 200, $asString = false)

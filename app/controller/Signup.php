@@ -31,9 +31,9 @@ class Signup extends Controller
 
         $csrf = new Csrf(App::$app->getConfig()['csrf_salt']);
 
-        if(!Form::checkFields(['email', 'password'])) {
+        if (!Form::checkFields(['email', 'password'])) {
             $result = ['success' => false, 'message' => 'Missing require field'];
-        } elseif(!$csrf->checkToken($_POST['csrfToken'])) {
+        } elseif (!$csrf->checkToken($_POST['csrfToken'])) {
             $result = ['success' => false, 'message' => 'Bad request'];
         }
 
@@ -84,15 +84,21 @@ class Signup extends Controller
 
     public function getSignupConfirm()
     {
-        $signupCode = $_GET['signup_code'];
         try {
+            if (isset($_GET['signup_code'])) {
+                $signupCode = $_GET['signup_code'];
+            } else {
+                Throw new Exception('Missing required parameter', 500);
+            }
+
             $user = new User();
             $user->activate($signupCode);
             App::$app->getAuth()->login($user->id);
             header('Location: .', true, 302);
         } catch (Exception $e) {
             App::$app->render('message',
-                ['title' => 'Token not found', 'message' => $e->getMessage(), 'style' => 'danger'], 404);
+                ['title' => 'Error', 'message' => $e->getMessage(), 'style' => 'danger'],
+                $e->getCode() > 0 ? $e->getCode() : 404);
         }
 
     }

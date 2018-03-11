@@ -17,6 +17,7 @@ class Dashboard extends Controller
     {
         if (!App::$app->getAuth()->isLoggedIn()) {
             header('Location: login', true, 302);
+            exit;
         }
     }
 
