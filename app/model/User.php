@@ -72,10 +72,10 @@ class User extends Model
     {
         if ($this->id) {
             $query = "UPDATE {$this->table} SET email=:email,password=:password,firstName=:firstName,lastName=:lastName,"
-                . "signupCode=:signupCode,activated=:activated WHERE id=:id LIMIT 1";
+                . "signupCode=:signupCode,activated=:activated WHERE id=:id;";
         } else {
-            $query = "INSERT INTO {$this->table} ('id','email','password','firstName','lastName', 'signupCode', 'activated') "
-                . "VALUES (:id,:email,:password,:firstName,:lastName,:signupCode,:activated);";
+            $query = "INSERT INTO {$this->table} ('id','email','password','firstName','lastName', 'signupCode', 'activated')"
+                . " VALUES (:id,:email,:password,:firstName,:lastName,:signupCode,:activated);";
         }
 
         $data = $this->getData();

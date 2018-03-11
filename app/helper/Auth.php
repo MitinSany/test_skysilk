@@ -2,12 +2,11 @@
 
 namespace app\helper;
 
-
 class Auth
 {
     const loggedInKey = 'loggedIn';
     const userId = 'userId';
-    const ipKey = 'up';
+    const ipKey = 'ip';
     protected $user;
     protected $ip;
 
@@ -20,7 +19,8 @@ class Auth
     public function isLoggedIn()
     {
         Session::init();
-        return Session::get(self::loggedInKey) && Session::get(self::ipKey) ;
+        return Session::get(self::loggedInKey) && Session::get(self::userId)
+            && Session::get(self::ipKey) == $_SERVER['REMOTE_ADDR'];
     }
 
     public function login(int $userId)
@@ -38,7 +38,12 @@ class Auth
     public function getUser()
     {
         $userId = Session::get(self::userId);
-        $this->user->loadById($userId);
-        return $this->user;
+        if ($userId) {
+            $this->user->loadById($userId);
+            return $this->user;
+        } else {
+            return false;
+        }
+
     }
 }
