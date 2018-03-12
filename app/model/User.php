@@ -60,7 +60,7 @@ class User extends Model
         return [
             'id' => $this->id,
             'email' => $this->email,
-            'password' => $this->id ? $this->password : $this->getHashPassword(),
+            'password' => $this->password,
             'firstName' => $this->firstName ? $this->firstName : null,
             'lastName' => $this->lastName ? $this->lastName : null,
             'signupCode' => $this->signupCode ? $this->signupCode : null,
@@ -122,8 +122,8 @@ class User extends Model
         return password_verify($password, $this->password);
     }
 
-    protected function getHashPassword(){
-        return password_hash($this->password, self::PASSWORD_ALGO);
+    protected function getHashPassword(string $password){
+        return password_hash($password, self::PASSWORD_ALGO);
     }
 
     public function setEmail(string $value)
@@ -144,6 +144,10 @@ class User extends Model
     public function setLastName(string $value)
     {
         return $this->lastName = $this->filter($value);
+    }
+
+    public function setPassword(string $value){
+        return $this->password = $this->getHashPassword($value);
     }
 
 }

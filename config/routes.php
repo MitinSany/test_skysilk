@@ -1,18 +1,16 @@
 <?php
 
-$app->get('/i', function () {
-    phpinfo();
-});
+return [
+    ['GET', '/', ['\app\controller\Dashboard', 'getIndex']],
+    ['GET', '/profile', ['\app\controller\Dashboard', 'getIndex']],
+    ['POST', '/profile', ['\app\controller\Dashboard', 'postProfile']],
 
-$app->get('/', ['\app\controller\Dashboard', 'getIndex']);
-$app->get('/profile', ['\app\controller\Dashboard', 'getIndex']);
-$app->post('/profile', ['\app\controller\Dashboard', 'postProfile']);
+    ['GET', '/login', ['\app\controller\Login', 'getLoginView']],
+    ['POST', '/login', ['\app\controller\Login', 'postLogin']],
+    ['GET', '/logout', ['\app\controller\Login', 'getLogout']],
 
-$app->get('/login', ['\app\controller\Login', 'getLoginView']);
-$app->post('/login', ['\app\controller\Login', 'postLogin']);
-$app->get('/logout', ['\app\controller\Login', 'getLogout']);
-
-$app->post('/signup', ['\app\controller\Signup', 'postSignup']);
-$app->get('/signup', ['\app\controller\Signup', 'getSignupView']);
-$app->get('/signup_confirm', ['\app\controller\Signup', 'getSignupConfirm']);
-$app->get('/successsignup', ['\app\controller\Signup', 'getSuccessSignupView']);
+    ['POST', '/signup', ['\app\controller\Signup', 'postSignup']],
+    ['GET', '/signup', ['\app\controller\Signup', 'getSignupView']],
+    ['GET', '/signup_confirm', ['\app\controller\Signup', 'getSignupConfirm']],
+    ['GET', '/successsignup', ['\app\controller\Signup', 'getSuccessSignupView']],
+];
