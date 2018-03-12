@@ -9,6 +9,9 @@ use app\helper\Session;
 use \app\model\User;
 use \app\exception\Exception;
 use \app\helper\EmailSender;
+use Zend\Diactoros\Response\RedirectResponse;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 class Dashboard extends Controller
 {
@@ -16,52 +19,43 @@ class Dashboard extends Controller
     public function __construct()
     {
         if (!App::$app->getAuth()->isLoggedIn()) {
-            header('Location: login', true, 302);
-            exit;
+            $response = new RedirectResponse('login');
+            App::$app->emit($response);
         }
     }
 
-    public function getIndex()
+    public function getIndex(RequestInterface $request, ResponseInterface $response, array $vars)
     {
         $userData = App::$app->getAuth()->getUser()->getData();
         $csrf = new Csrf(App::$app->getConfig()['csrf_salt']);
         $secret = $csrf->getSecret();
         $token = $csrf->getToken($secret);
-        $path = App::$app->path;
-        App::$app->render('dashboard/template', [
-            'site' => $_SERVER['HTTP_HOST'],
+        $path = $request->getUri()->getPath();
+        $site = $request->getUri()->getHost();
+        $response->getBody()->write(App::$app->render('dashboard/template', [
+            'site' => $site,
             'path' => $path == '/' ? 'dashboard' : $path,
             'userData' => $userData,
             'csrfToken' => $token
-        ]);
+        ]));
+        return $response;
     }
 
-    public function postProfile()
+    public function postProfile(RequestInterface $request, ResponseInterface $response, array $vars)
     {
-        if (!Form::checkFields(['firstName', 'lastName', 'csrfToken'])) {
-            App::$app->render('message', [
-                'title' => 'Error',
-                'message' => 'Missing require field',
-                'style' => 'danger'
-            ], 500);
-            exit;
+        if (!Form::checkFields($request, ['firstName', 'lastName', 'csrfToken'])) {
+            throw new Exception('Missing require field');
         }
 
         $csrf = new Csrf(App::$app->getConfig()['csrf_salt']);
-        if (!$csrf->checkToken($_POST['csrfToken'])) {
-            App::$app->render('message', [
-                'title' => 'Error',
-                'message' => 'Bad request',
-                'style' => 'danger'
-            ], 500);
-            exit;
+        if (!$csrf->checkToken($request->getParsedBody()['csrfToken'])) {
+            throw new Exception('Bad request');
         }
         $user = App::$app->getAuth()->getUser();
-        $user->firstName = $_POST['firstName'];
-        $user->lastName = $_POST['lastName'];
+        $user->firstName = $request->getParsedBody()['firstName'];
+        $user->lastName = $request->getParsedBody()['lastName'];
         $user->save();
 
-        header('Location: profile#saved', true, 302);
+        return new RedirectResponse('profile#saved');
     }
-
 }

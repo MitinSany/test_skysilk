@@ -5,5 +5,6 @@ start-server:
 	sudo php -S localhost:81 -t public/ public/index.php
 
 build:
+	composer update
 	composer install
 	composer dump-autoload

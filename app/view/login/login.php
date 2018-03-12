@@ -5,21 +5,21 @@
 
         function btnLoginClick() {
             $.ajax({
-                type: "POST",
+                type: 'POST',
                 url: 'login',
                 data: {
                     login: $('#login-username').val(),
                     password: $('#login-password').val(),
                     csrfToken: $('#csrfToken').val()
                 },
-                success: function (data) {
-                    if (data.success === false) {
-                        showLoginErrorMsg(data.message);
+                complete: function (data) {
+                    if (data.responseJSON.success) {
+                        hideLoginErrorMsg();
+                        location.href = data.responseJSON.location;
+                    } else {
+                        showLoginErrorMsg(data.responseJSON.message);
                         return false;
                     }
-
-                    hideLoginErrorMsg();
-                    location.href = data.location;
                 }
             });
         }

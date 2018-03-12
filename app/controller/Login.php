@@ -3,53 +3,65 @@
 namespace app\controller;
 
 use \app\Application as App;
+use app\exception\Exception;
+use app\exception\JsonFormatException;
 use app\helper\Form;
 use app\helper\Session;
 use app\model\User;
 use app\helper\Csrf;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
+use Zend\Diactoros\Response;
+use \Zend\Diactoros\Response\RedirectResponse;
+use \Zend\Diactoros\Response\JsonResponse;
 
 class Login extends Controller
 {
 
-    public function getLoginView()
+    public function getLoginView(RequestInterface $request, ResponseInterface $response, array $vars)
     {
         $csrf = new Csrf(App::$app->getConfig()['csrf_salt']);
         $secret = $csrf->getSecret();
         $token = $csrf->getToken($secret);
 
         if (App::$app->getAuth()->isLoggedIn()) {
-            header('Location: .', true, 302);
-            exit;
+            return new RedirectResponse('.');
         }
-
-        App::$app->render('login/login', ['csrfToken' => $token]);
+        $response->getBody()->write(App::$app->render('login/login', ['csrfToken' => $token]));
+        return $response;
     }
 
-    public function postLogin()
+    public function postLogin(RequestInterface $request, ResponseInterface $response, array $vars)
     {
-        header('Content-Type: application/json');
+        try {
+            if (!Form::checkFields($request, ['login', 'password', 'csrfToken'])) {
+                throw new JsonFormatException('Missing require field');
+            }
 
-        $user = new User();
-        $user->email = $_POST['login'];
-        $csrf = new Csrf(App::$app->getConfig()['csrf_salt']);
+            $user = new User();
+            $user->email = $request->getParsedBody()['login'];
+            $csrf = new Csrf(App::$app->getConfig()['csrf_salt']);
 
-        if(!Form::checkFields(['login', 'password', 'csrfToken'])) {
-            $result = ['success' => false, 'message' => 'Missing require field'];
-        } elseif(!$csrf->checkToken($_POST['csrfToken'])) {
-            $result = ['success' => false, 'message' => 'Bad request'];
-        } elseif($user->authorize($_POST['password'])){
-            App::$app->getAuth()->login($user->id);
-            $result = ['success' => true, 'location' => '.'];
-        } else {
-            $result = ['success' => false, 'message' => 'Login or password incorrect'];
+            if (!$csrf->checkToken($request->getParsedBody()['csrfToken'])) {
+                $result = ['success' => false, 'message' => 'Bad request'];
+            } elseif ($user->authorize($request->getParsedBody()['password'])) {
+                App::$app->getAuth()->login($user->id);
+                $result = ['success' => true, 'location' => '.'];
+            } else {
+                $result = ['success' => false, 'message' => 'Login or password incorrect'];
+            }
+        } catch (Exception $e) {
+            throw new JsonFormatException($e->getMessage(), $e->getCode());
         }
-        echo json_encode($result);
+        $response = new JsonResponse($result);
+        return $response;
     }
 
-    public function getLogout() {
+    public function getLogout(RequestInterface $request, ResponseInterface $response, array $vars)
+    {
         Session::destroy();
-        header('Location: login');
-        exit;
+        $response = new RedirectResponse('login');
+        App::$app->emit($response);
     }
 
 }

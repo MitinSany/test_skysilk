@@ -3,9 +3,20 @@
 namespace app;
 
 use app\exception\Exception;
+use app\exception\JsonFormatException;
 use app\model\User;
 use \PDO;
 use \app\helper\Auth;
+use \FastRoute\RouteCollector;
+use function \FastRoute\simpleDispatcher;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
+use \Zend\Diactoros\Request;
+use \Zend\Diactoros\ServerRequestFactory;
+use \Zend\Diactoros\Response;
+use \Zend\Diactoros\Response\SapiEmitter;
+use \Zend\Diactoros\Response\JsonResponse;
+use \FastRoute\Dispatcher;
 
 class Application
 {
@@ -30,37 +41,30 @@ class Application
     protected $auth;
 
     /**
+     * @var \FastRoute\Dispatcher
+     */
+    protected $dispatcher;
+
+    /**
      * @var Application
      */
     public static $app;
 
-    public $path;
-
-    public function __construct(array $config = [])
+    public function __construct(array $config, array $routes)
     {
         self::$app = $this;
         $this->config = $config;
         $user = new User();
-        $this->auth = new Auth($user);
+        $request = $this->getRequest();
+        $this->auth = new Auth($user, $request);
 
-        $this->path = strpos($_SERVER['REQUEST_URI'], '?') > 0
-            ? explode('?', $_SERVER['REQUEST_URI'])[0]
-            : $_SERVER['REQUEST_URI'];
-    }
+        $routeDefinitionCallback = function (RouteCollector $r) use ($routes) {
+            foreach ($routes as $route) {
+                $r->addRoute($route[0], $route[1], $route[2]);
+            }
+        };
 
-    protected function addRoute(string $method, string $route, $handler)
-    {
-        $this->routes[$method][$route] = $handler;
-    }
-
-    public function get(string $route, $handler)
-    {
-        $this->addRoute('GET', $route, $handler);
-    }
-
-    public function post(string $route, $handler)
-    {
-        $this->addRoute('POST', $route, $handler);
+        $this->dispatcher = simpleDispatcher($routeDefinitionCallback);
     }
 
     public function db()
@@ -72,41 +76,83 @@ class Application
         return $this->db;
     }
 
+    protected function getRequest(): RequestInterface
+    {
+        return ServerRequestFactory::fromGlobals(
+            $_SERVER,
+            $_GET,
+            $_POST,
+            $_COOKIE,
+            $_FILES
+        );
+    }
+
     public function run()
     {
+        $request = $this->getRequest();
+        $response = new Response();
+
+        $routeInfo = $this->dispatcher->dispatch($request->getMethod(), (string)$request->getUri()->getPath());
         try {
-            if (isset($this->routes[$_SERVER['REQUEST_METHOD']][$this->path])) {
-                $handler = $this->routes[$_SERVER['REQUEST_METHOD']][$this->path];
-                if (gettype($handler) == 'object') {
-                    $handler();
-                } elseif (gettype($handler) == 'array') {
-                    $class = new $handler[0];
+            switch ($routeInfo[0]) {
+                case Dispatcher::NOT_FOUND:
+                    $response = $response->withStatus(404);
+
+                    $page = $this->render('message', [
+                        'title' => 'Error',
+                        'message' => '404 - Page not found',
+                        'style' => 'warning'
+                    ]);
+                    $response->getBody()->write($page);
+                    break;
+
+                case Dispatcher::METHOD_NOT_ALLOWED:
+                    $page = $this->render('message', [
+                        'title' => 'Error',
+                        'message' => '405 - Method not allowed',
+                        'style' => 'warning'
+                    ]);
+                    $response->getBody()->write($page);
+                    $response = $response->withStatus(405);
+                    break;
+
+                case Dispatcher::FOUND:
+                    $handler = $routeInfo[1];
+                    $vars = $routeInfo[2];
+                    $controller = new $handler[0]();
                     $method = $handler[1];
-                    $class->$method();
-                } else {
-                    throw new Exception('Unknown type of operand: ' . $handler);
-                }
-            } else {
-                throw new Exception("Route not found<pre>{$_SERVER['REQUEST_URI']}</pre>", 500);
+                    $response = $controller->$method($request, $response, $vars);
+                    break;
+
             }
+        } catch (JsonFormatException $e) {
+            $data = ['success' => false, 'message' => $e->getMessage()];
+            $response = new JsonResponse($data, $e->getCode() > 0 ? $e->getCode() : 500);
         } catch (Exception $e) {
-            $this->render('message', [
+            $page = $this->render('message', [
                 'title' => 'Error',
                 'message' => $e->getMessage(),
                 'style' => 'danger'
-            ], $e->getCode() > 0 ? $e->getCode() : 500);
+            ]);
+            $response->getBody()->write($page);
+            $response = $response->withStatus(500);
         }
 
+        $this->emit($response);
     }
 
-    public function render(string $template, array $param = [], int $exitCode = 200, $asString = false)
+    public function emit(ResponseInterface $response)
+    {
+        $emitter = new SapiEmitter();
+        $emitter->emit($response);
+        exit;
+    }
+
+    public function render(string $template, array $param = []): string
     {
         $templateFile = realpath(__DIR__ . '/view/' . $template . '.php');
 
-        if ($exitCode != 200) {
-            http_response_code($exitCode);
-        }
-
+        ob_start();
         if (file_exists($templateFile)) {
             include __DIR__ . '/../app/view/layout.php';
         } else {
@@ -116,6 +162,7 @@ class Application
                 'style' => 'danger'
             ], 500);
         }
+        return ob_get_clean();
     }
 
     public function getConfig()
